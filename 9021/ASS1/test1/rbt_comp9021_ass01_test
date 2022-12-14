@@ -1,0 +1,87 @@
+#!/usr/bin/perl
+
+print("瑞哥整理，更多资料请添加微信: marey_marey111\n");
+print("瑞哥整理，跟多资料请参阅视频：https://space.bilibili.com/473833624\n");
+
+@removes = ();
+
+push @removes,"Please input the heroes' powers: ";
+push @removes,"Please input the number of power flips: ";
+
+# check input params
+die "usage: rbt_comp9021_ass01_test python_file_name test_case_filename\n" if @ARGV !=2;
+
+$python_file_name = shift;
+# check exists
+die "rbt_comp9021_ass01_test: error: $python_file_name not exists!\n" if ! -e $python_file_name;
+
+$test_file_name = shift;
+# check exists
+die "rbt_comp9021_ass01_test: error: $test_file_name not exists!\n" if ! -e $test_file_name;
+
+open my $in, '<', $test_file_name or die "$test_file_name 文件无法打开\n";
+my @lines = <$in>;
+close $in;
+
+my $command = "";
+my @exp_results = ();
+foreach my $line (@lines){
+		chomp $line;
+
+		if ( $line =~ /TEST \d+ BEGIN/ ) {
+		    print("$line\n");
+		    @exp_results = ();
+		    next;
+		}
+
+        if ($line =~ /\$ /) {
+            $line =~ s/\$ //g;
+            $command = $line;
+            next;
+        }
+
+        if ($line =~ /py/) {
+            $command = "$command\n$line";
+            next;
+        }
+
+        for my $item (@removes) {
+            $line =~ /$item/;
+        }
+
+        if ($line =~ /TEST \d+ END/ ) {
+            $command =~ s/\|.*/| python3 $python_file_name/g;
+            my $exec_command = $command;
+            $exec_command =~ s/-e//g;
+
+            my @real_results = (`$exec_command`);
+            my $real = join("", @real_results);
+
+
+            my $exp = join( "\n", @exp_results);
+            $exp =~ s/\s+$//g;
+            $real =~ s/\s+$//g;
+
+            for my $item (@removes) {
+              $real =~ s/$item//g;
+              $exp =~ s/$item//g;
+            }
+
+
+            if ("$real" eq "$exp"){
+                print("==============Test Pass==========\n");
+            }else {
+                print("==============Test Error==========\n");
+                print("COMMADN:\n$command\n");
+                print("COMPARE:\n*********************\n$real\n===================\n$exp\n");
+                print("==============Your Output=========\n");
+                print("**$real**\n");
+                print("==============Expect Output=======\n");
+                print("**$exp**");
+            }
+            print("$line\n");
+            next;
+        }
+
+        push @exp_results,$line;
+}
